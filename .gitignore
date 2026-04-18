@@ -1,0 +1,9 @@
+*.o
+*.out
+*.exe
+*.zip
+*.ps1
+_verify_zips.ps1
+_zip_all.ps1
+.DS_Store
+assets/
