@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
+#include <cstdarg>
 #include <cctype>
 #include <unistd.h>
 #include <libgen.h>
@@ -21,6 +22,89 @@
 #include "group_index.h"
 
 #define CMD_BUF_SZ 65536
+
+struct strbuf {
+    char*  buf;
+    size_t len;
+    size_t cap;
+};
+
+static void sb_init(strbuf& s) {
+    s.buf = nullptr;
+    s.len = 0;
+    s.cap = 0;
+}
+
+static void sb_free(strbuf& s) {
+    if (s.buf) free(s.buf);
+    s.buf = nullptr;
+    s.len = 0;
+    s.cap = 0;
+}
+
+static int sb_reserve(strbuf& s, size_t add) {
+    size_t need = s.len + add + 1;
+    if (need <= s.cap) return 0;
+    size_t nc = s.cap ? s.cap : 4096;
+    while (nc < need) nc *= 2;
+    char* nb = (char*)realloc(s.buf, nc);
+    if (!nb) return -1;
+    s.buf = nb;
+    s.cap = nc;
+    return 0;
+}
+
+static void sb_write(strbuf& s, const char* data, size_t n) {
+    if (sb_reserve(s, n) < 0) return;
+    memcpy(s.buf + s.len, data, n);
+    s.len += n;
+    s.buf[s.len] = '\0';
+}
+
+static void sb_printf(strbuf& s, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    size_t avail = (s.cap > s.len) ? (s.cap - s.len) : 0;
+    int n = vsnprintf(s.buf ? s.buf + s.len : nullptr, avail, fmt, ap);
+    va_end(ap);
+    if (n < 0) return;
+    if ((size_t)n + 1 > avail) {
+        if (sb_reserve(s, (size_t)n) < 0) return;
+        avail = s.cap - s.len;
+        va_start(ap, fmt);
+        n = vsnprintf(s.buf + s.len, avail, fmt, ap);
+        va_end(ap);
+        if (n < 0) return;
+    }
+    s.len += (size_t)n;
+}
+
+static void print_rec_to_sb(strbuf& s, const record& r, const ordering* order) {
+    static const int max_items = 3;
+    static const ordering default_ordering[max_items] = {
+        ordering::name, ordering::phone, ordering::group
+    };
+    const ordering* p = (order ? order : default_ordering);
+
+    for (int i = 0; i < max_items; i++) {
+        switch (p[i]) {
+            case ordering::name:
+                sb_printf(s, "%s", r.get_name() ? r.get_name() : "");
+                break;
+            case ordering::phone:
+                sb_printf(s, "%d", r.get_phone());
+                break;
+            case ordering::group:
+                sb_printf(s, "%d", r.get_group());
+                break;
+            case ordering::none:
+                continue;
+        }
+        if (i < max_items - 1 && p[i+1] != ordering::none)
+            sb_write(s, " ", 1);
+    }
+    sb_write(s, "\n", 1);
+}
 
 static int read_full(int fd, void* buf, int n) {
     char* p = (char*)buf;
@@ -132,7 +216,7 @@ static int read_config(const char* argv0, config_params& cfg) {
 
 static int process_select(const command& cmd,
                           name_dv_index& name_idx, phone_dv_index& phone_idx,
-                          group_index& grp_idx, record_list& data, FILE* out) {
+                          group_index& grp_idx, record_list& data, strbuf& out) {
     dyn_array<list_node*> found;
     bool use_and = cmd.has_op_land() || cmd.has_op_none();
     int count = 0;
@@ -176,8 +260,8 @@ static int process_select(const command& cmd,
 
     sort_found(found, cmd);
     for (int i = 0; i < found.size(); i++)
-        found[i]->rec.print(cmd.get_order(), out);
-    fprintf(out, "\n");
+        print_rec_to_sb(out, found[i]->rec, cmd.get_order());
+    sb_write(out, "\n", 1);
     return count;
 }
 
@@ -306,6 +390,9 @@ int main(int argc, char* argv[]) {
     FD_SET(sock, &active_set);
     bool stop_server = false;
 
+    strbuf out_sb;
+    sb_init(out_sb);
+
     while (!stop_server) {
         fd_set read_set = active_set;
         if (select(FD_SETSIZE, &read_set, NULL, NULL, NULL) < 0) {
@@ -377,13 +464,11 @@ int main(int argc, char* argv[]) {
             }
 
             if (cmd.get_type() == command_type::select) {
-                char* out_buf = nullptr;
-                size_t out_sz = 0;
-                FILE* mem = open_memstream(&out_buf, &out_sz);
-                int count = process_select(cmd, name_idx, phone_idx, grp_idx, data, mem);
-                fclose(mem);
-                send_response(fd, count, out_buf, (int)out_sz);
-                free(out_buf);
+                out_sb.len = 0;
+                int count = process_select(cmd, name_idx, phone_idx, grp_idx, data, out_sb);
+                send_response(fd, count,
+                              out_sb.buf ? out_sb.buf : "",
+                              (int)out_sb.len);
                 continue;
             }
 
@@ -395,6 +480,8 @@ int main(int argc, char* argv[]) {
         if (FD_ISSET(fd, &active_set))
             close(fd);
     }
+
+    sb_free(out_sb);
 
     return 0;
 }
