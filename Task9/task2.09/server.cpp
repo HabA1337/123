@@ -11,7 +11,9 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #include "record.h"
@@ -140,9 +142,33 @@ static int recv_msg(int fd, char* buf, int max_len) {
 }
 
 static int send_response(int fd, int count, const char* text, int text_len) {
-    if (write_full(fd, &count, sizeof(int)) < 0) return -1;
-    if (write_full(fd, &text_len, sizeof(int)) < 0) return -1;
-    if (text_len > 0 && write_full(fd, text, text_len) < 0) return -1;
+    int hdr[2] = { count, text_len };
+    struct iovec iov[2];
+    iov[0].iov_base = hdr;
+    iov[0].iov_len  = sizeof(hdr);
+    iov[1].iov_base = (void*)text;
+    iov[1].iov_len  = (size_t)text_len;
+    int cnt = (text_len > 0) ? 2 : 1;
+    ssize_t total = (ssize_t)sizeof(hdr) + (text_len > 0 ? text_len : 0);
+    ssize_t written = 0;
+    while (written < total) {
+        ssize_t w = writev(fd, iov, cnt);
+        if (w <= 0) return -1;
+        written += w;
+        if (written >= total) break;
+        ssize_t rem = w;
+        for (int i = 0; i < cnt && rem > 0; i++) {
+            if ((size_t)rem >= iov[i].iov_len) {
+                rem -= iov[i].iov_len;
+                iov[i].iov_len  = 0;
+                iov[i].iov_base = nullptr;
+            } else {
+                iov[i].iov_base = (char*)iov[i].iov_base + rem;
+                iov[i].iov_len -= rem;
+                rem = 0;
+            }
+        }
+    }
     return 0;
 }
 
@@ -410,6 +436,9 @@ int main(int argc, char* argv[]) {
                 if (new_fd < 0) {
                     perror("Server: accept");
                 } else {
+                    int flag = 1;
+                    setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY,
+                               (const void*)&flag, sizeof(flag));
                     FD_SET(new_fd, &active_set);
                 }
                 continue;

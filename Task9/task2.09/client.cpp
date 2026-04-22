@@ -6,12 +6,14 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 
-#define RBUF_SZ  4096
-#define CMD_SZ   65536
-#define CHUNK_SZ 4096
+#define RBUF_SZ   65536
+#define CMD_SZ    65536
+#define CHUNK_SZ  65536
 
 static int read_full(int fd, void* buf, int n) {
     char* p = (char*)buf;
@@ -38,15 +40,39 @@ static int write_full(int fd, const void* buf, int n) {
 }
 
 static int send_command(int fd, const char* cmd, int len) {
-    if (write_full(fd, &len, sizeof(int)) < 0) return -1;
-    if (write_full(fd, cmd, len) < 0) return -1;
+    struct iovec iov[2];
+    iov[0].iov_base = &len;
+    iov[0].iov_len  = sizeof(int);
+    iov[1].iov_base = (void*)cmd;
+    iov[1].iov_len  = (size_t)len;
+    ssize_t total = (ssize_t)sizeof(int) + len;
+    ssize_t written = 0;
+    while (written < total) {
+        ssize_t w = writev(fd, iov, 2);
+        if (w <= 0) return -1;
+        written += w;
+        if (written >= total) break;
+        ssize_t rem = w;
+        for (int i = 0; i < 2 && rem > 0; i++) {
+            if ((size_t)rem >= iov[i].iov_len) {
+                rem -= iov[i].iov_len;
+                iov[i].iov_len  = 0;
+                iov[i].iov_base = nullptr;
+            } else {
+                iov[i].iov_base = (char*)iov[i].iov_base + rem;
+                iov[i].iov_len -= rem;
+                rem = 0;
+            }
+        }
+    }
     return 0;
 }
 
 static int recv_response(int fd, int* count) {
-    if (read_full(fd, count, sizeof(int)) < 0) return -1;
-    int text_len;
-    if (read_full(fd, &text_len, sizeof(int)) < 0) return -1;
+    int hdr[2];
+    if (read_full(fd, hdr, sizeof(hdr)) < 0) return -1;
+    *count = hdr[0];
+    int text_len = hdr[1];
 
     char buf[CHUNK_SZ];
     int remaining = text_len;
@@ -64,6 +90,9 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage: %s host port\n", argv[0]);
         return 1;
     }
+
+    static char stdout_buf[1 << 20];
+    setvbuf(stdout, stdout_buf, _IOFBF, sizeof(stdout_buf));
 
     const char* host = argv[1];
     int port = atoi(argv[2]);
@@ -89,6 +118,10 @@ int main(int argc, char* argv[]) {
         perror("Client: connect");
         return 1;
     }
+
+    int flag = 1;
+    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+               (const void*)&flag, sizeof(flag));
 
     int res = 0;
     clock_t start = clock();
