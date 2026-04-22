@@ -27,23 +27,11 @@ static int read_full(int fd, void* buf, int n) {
     return n;
 }
 
-static int write_full(int fd, const void* buf, int n) {
-    const char* p = (const char*)buf;
-    int rem = n;
-    while (rem > 0) {
-        int w = write(fd, p, rem);
-        if (w <= 0) return -1;
-        p += w;
-        rem -= w;
-    }
-    return n;
-}
-
 static int send_command(int fd, const char* cmd, int len) {
     struct iovec iov[2];
     iov[0].iov_base = &len;
     iov[0].iov_len  = sizeof(int);
-    iov[1].iov_base = (void*)cmd;
+    iov[1].iov_base = const_cast<char*>(cmd);
     iov[1].iov_len  = (size_t)len;
     ssize_t total = (ssize_t)sizeof(int) + len;
     ssize_t written = 0;

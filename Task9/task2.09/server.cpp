@@ -120,18 +120,6 @@ static int read_full(int fd, void* buf, int n) {
     return n;
 }
 
-static int write_full(int fd, const void* buf, int n) {
-    const char* p = (const char*)buf;
-    int rem = n;
-    while (rem > 0) {
-        int w = write(fd, p, rem);
-        if (w <= 0) return -1;
-        p += w;
-        rem -= w;
-    }
-    return n;
-}
-
 static int recv_msg(int fd, char* buf, int max_len) {
     int len;
     if (read_full(fd, &len, sizeof(int)) < 0) return -1;
@@ -146,7 +134,7 @@ static int send_response(int fd, int count, const char* text, int text_len) {
     struct iovec iov[2];
     iov[0].iov_base = hdr;
     iov[0].iov_len  = sizeof(hdr);
-    iov[1].iov_base = (void*)text;
+    iov[1].iov_base = const_cast<char*>(text);
     iov[1].iov_len  = (size_t)text_len;
     int cnt = (text_len > 0) ? 2 : 1;
     ssize_t total = (ssize_t)sizeof(hdr) + (text_len > 0 ? text_len : 0);
