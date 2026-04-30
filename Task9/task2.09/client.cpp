@@ -161,9 +161,11 @@ int main(int argc, char* argv[]) {
 
     close(sock);
 
+    fflush(stdout);
+
     clock_t end = clock();
     double elapsed = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("%s : Result = %d Elapsed = %.2f\n", argv[0], res, elapsed);
+    fprintf(stderr, "%s : Result = %d Elapsed = %.2f\n", argv[0], res, elapsed);
 
     return 0;
 }

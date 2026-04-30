@@ -1,0 +1,10 @@
+select * where name = Student;
+select * where phone = 1234567;
+select * where phone = 7654321;
+select * where group = 208;
+select * where group = 209;
+select * where name = Student and phone = 1111111;
+select * where name = Student and group = 108;
+select * where name = Student and phone = 1234567;
+select * where name = Student and phone = 7654321;
+quit;

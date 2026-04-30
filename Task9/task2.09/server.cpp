@@ -345,40 +345,6 @@ int main(int argc, char* argv[]) {
     config_params cfg;
     if (read_config(argv[0], cfg) < 0) return 2;
 
-    record_list    data;
-    name_dv_index  name_idx(cfg.k_vec_name);
-    phone_dv_index phone_idx(cfg.k_vec_phone);
-    group_index    grp_idx(cfg.k_vec_name, cfg.k_vec_phone);
-
-    FILE* file = fopen(argv[1], "r");
-    if (!file) {
-        fprintf(stderr, "Cannot open file: %s\n", argv[1]);
-        return 3;
-    }
-
-    while (true) {
-        record rec;
-        io_status status = rec.read(file);
-        if (status == io_status::eof) break;
-        if (status == io_status::success) {
-            list_node* nd = data.push_back(std::move(rec));
-            name_idx.add(nd);
-        } else {
-            fprintf(stderr, "Error reading record\n");
-            fclose(file);
-            return 3;
-        }
-    }
-    fclose(file);
-
-    name_idx.finalize(data);
-    for (list_node* cur = data.head(); cur; cur = cur->next) {
-        phone_idx.add(cur);
-        grp_idx.add(cur);
-    }
-    phone_idx.finalize();
-    grp_idx.finalize();
-
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     if (sock < 0) { perror("Server: socket"); return 4; }
 
@@ -394,10 +360,46 @@ int main(int argc, char* argv[]) {
         perror("Server: bind");
         return 4;
     }
-    if (listen(sock, 3) < 0) {
+    if (listen(sock, 64) < 0) {
         perror("Server: listen");
         return 4;
     }
+
+    record_list    data;
+    name_dv_index  name_idx(cfg.k_vec_name);
+    phone_dv_index phone_idx(cfg.k_vec_phone);
+    group_index    grp_idx(cfg.k_vec_name, cfg.k_vec_phone);
+
+    FILE* file = fopen(argv[1], "r");
+    if (!file) {
+        fprintf(stderr, "Cannot open file: %s\n", argv[1]);
+        close(sock);
+        return 3;
+    }
+
+    while (true) {
+        record rec;
+        io_status status = rec.read(file);
+        if (status == io_status::eof) break;
+        if (status == io_status::success) {
+            list_node* nd = data.push_back(std::move(rec));
+            name_idx.add(nd);
+        } else {
+            fprintf(stderr, "Error reading record\n");
+            fclose(file);
+            close(sock);
+            return 3;
+        }
+    }
+    fclose(file);
+
+    name_idx.finalize(data);
+    for (list_node* cur = data.head(); cur; cur = cur->next) {
+        phone_idx.add(cur);
+        grp_idx.add(cur);
+    }
+    phone_idx.finalize();
+    grp_idx.finalize();
 
     fd_set active_set;
     FD_ZERO(&active_set);
