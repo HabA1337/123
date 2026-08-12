@@ -1,0 +1,9 @@
+# Keep Agent indexing off build artifacts and archives.
+# Do not ignore *.txt / *.md — the tasks use config.txt and notes.
+*.o
+*.out
+*.exe
+*.zip
+*.ps1
+.DS_Store
+assets/

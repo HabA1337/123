@@ -1,0 +1,14 @@
+---
+description: Prevent Cursor Agent from hanging on workspace-wide file search
+alwaysApply: true
+---
+
+Do not use Glob (Search files) across the whole workspace. In this project that search hangs forever, especially `**/*.{log,txt,md}` in the folder named VPN.
+
+Instead:
+
+- Read known files directly (`run_server.sh`, `run_client.sh`, `TaskN/...`).
+- Scope Glob/Grep to one task folder: `Task5`, `Task6`, `Task7`, `Task8`, `Task9`, `Task10`, or `Информация`.
+- Prefer `**/*.cpp` / `**/*.h` / `Makefile` inside a single Task folder, never `**/*` at the repo root.
+
+If a Glob is denied by a project hook, do not retry it. Narrow the path and continue.
