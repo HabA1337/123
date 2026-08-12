@@ -23,13 +23,15 @@ if %errorlevel%==0 set "ADMIN=yes"
 
 :menu
 cls
+call :findexe
 echo ==========================================================
 echo   CURSOR REPAIR TOOL
 echo ==========================================================
 echo   Admin rights : %ADMIN%
 echo   Profile      : %PROFILE_DIR%
-echo   Install      : %INSTALL_USER%
+echo   Cursor.exe   : %EXESHOW%
 echo   Report file  : %LOG%
+if "%DUAL%"=="yes" echo   WARNING      : two installs found, user and system wide
 echo ==========================================================
 echo.
 echo   Try to start Cursor after each step.
@@ -41,7 +43,8 @@ echo   4 - Prepare clean reinstall. Deletes program files only.
 echo   5 - Add antivirus exclusions. Needs admin rights.
 echo   6 - Start Cursor without extensions and without GPU.
 echo   7 - Undo step 3. Restores the profile from backup.
-echo   9 - Run 1, 2, 3 and 6 in a row. Recommended.
+echo   8 - Repair settings.json. Fixes Cursor closing at once.
+echo   9 - Run 1, 2, 8, 3 and 6 in a row. Recommended.
 echo   0 - Exit
 echo.
 set "CH="
@@ -54,6 +57,7 @@ if "%CH%"=="4" goto cleaninstall
 if "%CH%"=="5" goto exclusions
 if "%CH%"=="6" goto launch_menu
 if "%CH%"=="7" goto restore
+if "%CH%"=="8" goto fix_menu
 if "%CH%"=="9" goto autorun
 if "%CH%"=="0" goto done
 goto menu
@@ -78,9 +82,14 @@ call :launch
 pause
 goto menu
 
+:fix_menu
+call :fixsettings
+pause
+goto menu
+
 :autorun
 echo.
-echo Steps 1, 2, 3 and 6 will run now.
+echo Steps 1, 2, 8, 3 and 6 will run now.
 echo Step 3 moves your profile to a backup folder named Cursor.bak-%TS% .
 echo Nothing is deleted. Option 7 puts everything back.
 echo.
@@ -89,6 +98,7 @@ set /p "GO=Continue? Type y and press Enter: "
 if /i not "%GO%"=="y" goto menu
 call :diag
 call :killcache
+call :fixsettings
 call :resetprofile force
 call :launch
 echo.
@@ -112,10 +122,32 @@ set "OK="
 set /p "OK=Continue? Type y and press Enter: "
 if /i not "%OK%"=="y" goto menu
 call :killproc
-rd /s /q "%INSTALL_USER%" 2>nul
+if exist "%INSTALL_USER%" rd /s /q "%INSTALL_USER%" 2>nul
 rd /s /q "%UPDATER_DIR%" 2>nul
 if exist "%INSTALL_USER%" echo Some files are locked. Restart Windows and run this option again.
-if exist "%INSTALL_SYS%\Cursor.exe" echo A system wide install exists in %INSTALL_SYS% . Remove it in Settings, Apps, Cursor.
+if exist "%INSTALL_SYS%\unins000.exe" goto uninst_sys
+if exist "%INSTALL_SYS%" goto delete_sys
+goto clean_end
+
+:uninst_sys
+echo.
+echo A system wide install was found in %INSTALL_SYS%
+echo Its own uninstaller will open now. Confirm it in that window.
+start /wait "" "%INSTALL_SYS%\unins000.exe"
+goto clean_end
+
+:delete_sys
+if not "%ADMIN%"=="yes" goto clean_needadmin
+rd /s /q "%INSTALL_SYS%" 2>nul
+if exist "%INSTALL_SYS%" echo Could not remove %INSTALL_SYS% . Remove Cursor in Settings, Apps.
+goto clean_end
+
+:clean_needadmin
+echo Cursor sits in %INSTALL_SYS% and removing it needs admin rights.
+echo Restart this script with Run as administrator.
+goto clean_end
+
+:clean_end
 echo.
 echo Program files removed.
 echo Download the installer and run it as administrator.
@@ -128,7 +160,9 @@ goto menu
 echo.
 if not "%ADMIN%"=="yes" goto needadmin
 echo Adding antivirus exclusions...
-powershell -NoProfile -Command "Add-MpPreference -ExclusionPath '%INSTALL_USER%','%PROFILE_DIR%' -ErrorAction SilentlyContinue; Add-MpPreference -ExclusionProcess 'Cursor.exe','rg.exe','inno_updater.exe' -ErrorAction SilentlyContinue; Write-Output 'exclusions added'"
+if exist "%INSTALL_USER%" powershell -NoProfile -Command "Add-MpPreference -ExclusionPath '%INSTALL_USER%' -ErrorAction SilentlyContinue"
+if exist "%INSTALL_SYS%" powershell -NoProfile -Command "Add-MpPreference -ExclusionPath '%INSTALL_SYS%' -ErrorAction SilentlyContinue"
+powershell -NoProfile -Command "Add-MpPreference -ExclusionPath '%PROFILE_DIR%' -ErrorAction SilentlyContinue; Add-MpPreference -ExclusionProcess 'Cursor.exe','rg.exe','inno_updater.exe' -ErrorAction SilentlyContinue; Write-Output 'exclusions added'"
 echo.
 echo If you use another antivirus, add the same two folders there by hand.
 echo.
@@ -177,6 +211,25 @@ exit /b 0
 
 :: ---------------- subroutines ----------------
 
+:findexe
+set "EXE="
+if exist "%INSTALL_USER%\Cursor.exe" set "EXE=%INSTALL_USER%\Cursor.exe"
+if not defined EXE if exist "%INSTALL_SYS%\Cursor.exe" set "EXE=%INSTALL_SYS%\Cursor.exe"
+set "EXESHOW=NOT FOUND"
+if defined EXE set "EXESHOW=%EXE%"
+set "DUAL=no"
+if exist "%INSTALL_USER%\Cursor.exe" if exist "%INSTALL_SYS%\Cursor.exe" set "DUAL=yes"
+exit /b 0
+
+:fixsettings
+echo.
+echo Checking settings.json for values that crash startup...
+powershell -NoProfile -Command "$f = Join-Path $env:APPDATA 'Cursor\User\settings.json'; if (-not (Test-Path $f)) { Write-Output 'no settings.json, nothing to repair'; exit }; $enc = New-Object System.Text.UTF8Encoding $false; Copy-Item $f ($f + '.bak-%TS%') -Force; $raw = Get-Content -Raw -Path $f; $keep = @(); foreach ($ln in ($raw -split '\r?\n')) { if (-not $ln.TrimStart().StartsWith('//')) { $keep += $ln } }; $clean = $keep -join [char]10; try { $j = ConvertFrom-Json $clean } catch { Move-Item $f ($f + '.broken-%TS%') -Force; [System.IO.File]::WriteAllText($f, '{}', $enc); Write-Output 'settings.json was not valid JSON. Moved aside, empty one created.'; exit }; $fixed = @(); foreach ($k in @('http.noProxy', 'cursor.general.globalIgnoreList', 'files.watcherExclude.list')) { $prop = $j.PSObject.Properties[$k]; if ($prop -and ($prop.Value -is [string])) { $arr = @(); foreach ($part in ($prop.Value -split '[,;]')) { $t = $part.Trim(); if ($t) { $arr += $t } }; $prop.Value = $arr; $fixed += $k } }; if ($fixed.Count -gt 0) { [System.IO.File]::WriteAllText($f, (ConvertTo-Json $j -Depth 30), $enc); Write-Output ('repaired and saved: ' + ($fixed -join ', ')) } else { Write-Output 'no startup crashing value found in settings.json' }"
+echo.
+echo A copy of the old file is kept next to it with a .bak name.
+echo.
+exit /b 0
+
 :killproc
 taskkill /f /im Cursor.exe >nul 2>&1
 taskkill /f /im "Cursor Nightly.exe" >nul 2>&1
@@ -207,6 +260,18 @@ echo === Program files, system install === >>"%LOG%"
 set "S=MISSING"
 if exist "%INSTALL_SYS%\Cursor.exe" set "S=FOUND"
 echo %S% %INSTALL_SYS%\Cursor.exe >>"%LOG%"
+echo. >>"%LOG%"
+echo === settings.json, this is where startup crashes come from === >>"%LOG%"
+type "%PROFILE_DIR%\User\settings.json" >>"%LOG%" 2>&1
+echo. >>"%LOG%"
+echo === Installs recorded by Windows === >>"%LOG%"
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s /f cursor >>"%LOG%" 2>&1
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s /f cursor >>"%LOG%" 2>&1
+echo. >>"%LOG%"
+echo === Which Cursor.exe would start === >>"%LOG%"
+call :findexe
+echo launch target: %EXESHOW% >>"%LOG%"
+echo two installs at once: %DUAL% >>"%LOG%"
 echo. >>"%LOG%"
 echo === Leftovers from a broken update === >>"%LOG%"
 set "S=none"
@@ -283,6 +348,7 @@ md "%PROFILE_DIR%\User" 2>nul
 copy "%APPDATA%\Cursor.bak-%TS%\User\settings.json" "%PROFILE_DIR%\User\settings.json" >nul 2>&1
 copy "%APPDATA%\Cursor.bak-%TS%\User\keybindings.json" "%PROFILE_DIR%\User\keybindings.json" >nul 2>&1
 xcopy "%APPDATA%\Cursor.bak-%TS%\User\snippets" "%PROFILE_DIR%\User\snippets" /e /i /q >nul 2>&1
+call :fixsettings
 echo Profile reset. Backup folder:
 echo   %APPDATA%\Cursor.bak-%TS%
 echo Cursor will now start with an empty window and will not reopen the old folder.
@@ -307,9 +373,7 @@ exit /b 0
 
 :launch
 echo.
-set "EXE="
-if exist "%INSTALL_USER%\Cursor.exe" set "EXE=%INSTALL_USER%\Cursor.exe"
-if not defined EXE if exist "%INSTALL_SYS%\Cursor.exe" set "EXE=%INSTALL_SYS%\Cursor.exe"
+call :findexe
 if not defined EXE goto launch_missing
 echo Starting %EXE%
 start "" "%EXE%" --disable-extensions --disable-gpu -n
