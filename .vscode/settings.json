@@ -1,0 +1,9 @@
+{
+  "search.followSymlinks": false,
+  "search.exclude": {
+    "**/*.zip": true,
+    "**/*.o": true,
+    "**/*.out": true,
+    "**/*.exe": true
+  }
+}
