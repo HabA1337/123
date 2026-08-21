@@ -172,7 +172,7 @@
     }
 
     var btn = sent
-      ? '<button class="btn" disabled>уже в доставке</button> <span class="hint">передано ' + K.esc(w0.sentAt) + (w0.supplyWb ? " · " + K.esc(w0.supplyWb) : "") + "</span>"
+      ? '<button class="btn" id="btn-deliver" disabled>уже в доставке</button> <span class="hint">передано ' + K.esc(w0.sentAt) + (w0.supplyWb ? " · " + K.esc(w0.supplyWb) : "") + "</span>"
       : '<button class="btn btn-ok" id="btn-deliver" ' + (canSend ? "" : "disabled") + '>в доставку</button> ' +
         (canSend
           ? '<span class="hint">заявка закрыта, КИЗ на месте — можно отдать в поставку WB</span>'
