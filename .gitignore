@@ -2,6 +2,7 @@
 *.out
 *.exe
 *.zip
+!VMS-demo-dlya-Konstantina.zip
 *.ps1
 _verify_zips.ps1
 _zip_all.ps1

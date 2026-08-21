@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>ТСД · КОНТУР · сборка</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%23141b24' width='32' height='32'/%3E%3Crect fill='%23c9a01a' y='26' width='32' height='6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/tsd.css">
+</head>
+<body>
+  <div class="tsd">
+    <header class="th">
+      <div class="doc">заявка <span id="doc">MSK-0821-14</span> · склад <span id="wh">Северная</span></div>
+      <div class="title">Сборка FBS</div>
+      <div class="row2">
+        <span>Иванов С.П. · ТСД-03</span>
+        <span id="pos">1 / 3</span>
+      </div>
+    </header>
+    <div class="stage" id="stage">
+      <div class="cell">
+        <div class="l">иди в ячейку</div>
+        <div class="v" id="cellv">A-12-04</div>
+      </div>
+      <div class="sku" id="sku">Футболка Basic черная, р.52</div>
+      <div class="art" id="art">арт. NTX-FT-BLK-52 · заказ 3541287654303</div>
+
+      <div class="step on" id="step-ean">
+        <div class="n">1. отсканируй ШК товара</div>
+        <input class="inp" id="ean" inputmode="numeric" autocomplete="off" placeholder="штрихкод">
+        <div class="chips">
+          <button type="button" class="chip" id="ean-chip" data-f="ean" data-v="4600605024117">подставить 4600605024117</button>
+        </div>
+      </div>
+      <div class="step" id="step-kiz">
+        <div class="n">2. отсканируй КИЗ</div>
+        <input class="inp" id="kiz" autocomplete="off" placeholder="DataMatrix / КИЗ" disabled>
+        <div class="chips">
+          <button type="button" class="chip" id="kiz-chip" data-f="kiz" data-v="0104600605024117215Ab8kQ2">подставить КИЗ этого заказа</button>
+          <button type="button" class="chip" data-f="kiz" data-v="0000000000000BAD">чужой КИЗ (ошибка)</button>
+        </div>
+      </div>
+
+      <div id="msg" class="msg" hidden></div>
+      <button class="btn btn-go" id="go">пробить ШК</button>
+    </div>
+    <footer class="tf">контур ТСД · демо-стенд · не боевое устройство</footer>
+  </div>
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/tsd.js"></script>
+</body>
+</html>

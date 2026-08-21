@@ -1,0 +1,134 @@
+/* ТСД: узкий экран, складской тон, крупные ячейки */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #141b24;
+  color: #e8edf2;
+  font: 15px/1.3 "Liberation Sans", "Segoe UI", Tahoma, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+
+.tsd {
+  min-height: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.th {
+  background: #0e141b;
+  padding: 8px 10px 7px;
+  border-bottom: 3px solid #c9a01a;
+}
+.th .doc { font-size: 12px; color: #9aa6b3; }
+.th .title { font-size: 16px; font-weight: 700; }
+.th .row2 {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #c5ced6;
+}
+
+.stage { flex: 1; padding: 12px 12px 10px; overflow: auto; }
+.cell {
+  background: #1d2834;
+  border: 1px solid #3a4654;
+  padding: 10px 12px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.cell .l { color: #9aa6b3; font-size: 12px; }
+.cell .v {
+  font-size: 34px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  color: #e8c547;
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.sku { font-size: 17px; font-weight: 650; margin: 0 0 4px; }
+.art { color: #9aa6b3; font-size: 13px; margin-bottom: 12px; }
+.art b { color: #e8edf2; font-family: Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.step {
+  background: #1d2834;
+  border: 1px solid #3a4654;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.step.on { border-color: #c9a01a; }
+.step .n { color: #9aa6b3; font-size: 12px; margin-bottom: 4px; }
+.inp {
+  width: 100%;
+  border: 2px solid #c9a01a;
+  background: #fffef8;
+  color: #111;
+  font-size: 16px;
+  padding: 8px 8px;
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inp:disabled {
+  border-color: #3a4654;
+  background: #2a3440;
+  color: #8b97a4;
+}
+
+.btn {
+  width: 100%;
+  border: 0;
+  padding: 12px 10px;
+  font-size: 16px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.btn-go { background: #c9a01a; color: #1a1404; }
+.btn-go:disabled { background: #3a4654; color: #8b97a4; cursor: not-allowed; }
+.btn-ok { background: #1b7540; color: #fff; }
+.btn-ghost {
+  background: transparent;
+  color: #9aa6b3;
+  border: 1px solid #3a4654;
+  margin-top: 8px;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip {
+  border: 1px dashed #6a7582;
+  background: #1d2834;
+  color: #d5dde4;
+  font-size: 11.5px;
+  padding: 4px 6px;
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+  cursor: pointer;
+}
+
+.msg {
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.msg.ok { background: #163522; color: #b6e7c4; border: 1px solid #1b7540; }
+.msg.bad { background: #3a1616; color: #f0b4b4; border: 1px solid #b01818; }
+
+.sticker-mini {
+  background: #fff;
+  color: #111;
+  padding: 8px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  margin: 8px 0;
+}
+.sticker-mini b { font-size: 16px; display: block; }
+
+.tf {
+  padding: 7px 10px 10px;
+  color: #7d8894;
+  font-size: 11px;
+  border-top: 1px solid #2a3440;
+}
+
+.done-list { font-size: 12px; color: #9aa6b3; margin-top: 10px; }
+.done-list div { padding: 3px 0; border-bottom: 1px dotted #2a3440; }

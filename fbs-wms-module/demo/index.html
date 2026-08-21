@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>КОНТУР · склад Северная · демо-стенд</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231e2a36' width='32' height='32'/%3E%3Crect fill='%23c9a01a' y='26' width='32' height='6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <b>КОНТУР</b>
+        <span>складской модуль · стенд</span>
+      </div>
+      <div class="top-meta">
+        <div><span class="k">склад</span> Северная</div>
+        <div><span class="k">хост</span> vps-demo</div>
+        <div id="mode">режим склада · диспетчер</div>
+        <span class="stand">демо-стенд, не боевая база</span>
+      </div>
+      <div class="top-right">
+        <div>печать: Zebra-МСК-1 · очередь <b id="prn-q">0</b></div>
+        <div>Смирнов Д.А.</div>
+        <div class="clk" id="clk"></div>
+      </div>
+    </header>
+    <div class="notice">Демо-стенд контура. Данные учебные. Поднимается на VPS. Это не чужой SaaS и не прод клиента.</div>
+    <div class="body">
+      <nav class="side">
+        <div class="grp">клиент</div>
+        <a id="nav-client" href="#/client">Кабинет клиента</a>
+        <div class="grp">склад</div>
+        <a id="nav-waves" href="#/waves">Заявки FBS</a>
+        <a id="nav-feed" href="#/feed">Лента ТСД</a>
+        <a id="nav-kiz" href="#/kiz">КИЗ / стикеры</a>
+        <a id="nav-stock" href="#/stock">Остатки</a>
+        <div class="grp">терминал</div>
+        <a id="nav-tsd" href="#/tsd">ТСД сборка</a>
+      </nav>
+      <main id="main"></main>
+    </div>
+    <footer class="foot">
+      <div>контур 0.9-стенд · склад «Северная» · мост печати 127.0.0.1:9100</div>
+      <div><span id="foot-clk"></span> · учебные заказы WB, не кабинет маркетплейса · <button type="button" class="linkish" id="reset-demo">сбросить стенд</button></div>
+    </footer>
+  </div>
+  <div id="modal" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
