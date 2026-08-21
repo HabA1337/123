@@ -138,6 +138,30 @@
     }
   };
 
+  K.ago = function (from) {
+    var s = Math.max(0, Math.round((Date.now() - from) / 1000));
+    if (s < 60) return s + " сек назад";
+    var m = Math.round(s / 60);
+    if (m < 60) return m + " мин назад";
+    return Math.round(m / 60) + " ч назад";
+  };
+
+  K.resetDemo = function () {
+    try { localStorage.removeItem(K.store.key); } catch (e) {}
+  };
+
+  K.stickerOf = function (orderId) {
+    var w, j, o;
+    for (w = 0; w < K.waves.length; w++) {
+      for (j = 0; j < K.waves[w].shown.length; j++) {
+        o = K.waves[w].shown[j];
+        if (o.id === orderId) return o.sticker;
+      }
+    }
+    var n = parseInt(String(orderId).slice(-3), 10) || 0;
+    return "364 512 " + (847 + (n % 20));
+  };
+
   K.pushEvent = function (ev) {
     var s = K.store.get();
     var list = s.extraFeed || [];
@@ -159,12 +183,13 @@
     if (s.pickedIds) {
       K.waves.forEach(function (wave) {
         wave.shown.forEach(function (o) {
-          if (s.pickedIds[o.id]) {
+          if (s.pickedIds[o.id] && o.st !== "picked") {
+            var wasErr = o.st === "err" || !!o.err;
             o.st = "picked";
             o.kiz = true;
-            if (!wave.picked || wave.picked < wave.total) {
-              /* keep listed pick count stable unless it was in-progress */
-            }
+            o.err = "";
+            if (wave.picked < wave.total) wave.picked += 1;
+            if (wasErr && wave.err > 0) wave.err -= 1;
           }
         });
       });

@@ -19,8 +19,8 @@
   function paint() {
     var c = cur();
     var s = skuOf();
-    $("doc").textContent = c ? c.wave : "—";
-    $("pos").textContent = q.length ? (i + 1) + " / " + q.length : "нет заданий";
+    $("doc").textContent = c ? c.wave : (printed.length ? q[0] && q[0].wave || "MSK-0821-14" : "—");
+    $("pos").textContent = !q.length ? "нет заданий" : (i >= q.length ? q.length + " / " + q.length : (i + 1) + " / " + q.length);
     if (!c) {
       $("stage").innerHTML =
         '<div class="msg ok">Задания линии закрыты. Стикеры ушли на принтер. Можно сдать ТСД.</div>' +
@@ -85,7 +85,7 @@
         paint();
         return;
       }
-      var order = { id: c.id, ean: s.ean, sticker: stickerOf(c.id) };
+      var order = { id: c.id, ean: s.ean, sticker: K.stickerOf(c.id) };
       var saved = K.store.get();
       var picked = saved.pickedIds || {};
       picked[c.id] = true;
@@ -115,18 +115,15 @@
     }
   }
 
-  function stickerOf(id) {
-    var n = parseInt(id.slice(-3), 10);
-    return "364 512 " + (847 + (n % 20));
-  }
-
   document.addEventListener("click", function (e) {
-    if (e.target.id === "go") submit();
-    if (e.target.classList.contains("chip")) {
-      var f = e.target.getAttribute("data-f");
-      var v = e.target.getAttribute("data-v");
-      if (f === "ean") { $("ean").value = v; if (phase === "ean") submit(); }
-      if (f === "kiz") { $("kiz").value = v; if (phase === "kiz") submit(); }
+    var t = e.target && e.target.closest ? e.target.closest("button, .chip") : e.target;
+    if (!t) return;
+    if (t.id === "go") submit();
+    if (t.classList.contains("chip")) {
+      var f = t.getAttribute("data-f");
+      var v = t.getAttribute("data-v");
+      if (f === "ean" && phase === "ean") { $("ean").value = v; submit(); }
+      if (f === "kiz" && phase === "kiz") { $("kiz").value = v; submit(); }
     }
   });
   document.addEventListener("keydown", function (e) {

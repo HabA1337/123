@@ -29,7 +29,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 12.5px/1.35 "Segoe UI", "Liberation Sans", Tahoma, Arial, sans-serif;
+  font: 12.5px/1.35 "Liberation Sans", "Segoe UI", Tahoma, Arial, sans-serif;
 }
 
 a { color: var(--link); text-decoration: none; }
@@ -48,6 +48,7 @@ button { cursor: pointer; }
   color: #e8edf2;
   display: flex;
   align-items: stretch;
+  flex-wrap: wrap;
   min-height: 44px;
   border-bottom: 3px solid var(--amber);
 }
@@ -69,10 +70,12 @@ button { cursor: pointer; }
 .top-meta {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 0 14px;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 6px 14px;
   flex: 1;
   font-size: 12px;
+  min-width: 280px;
 }
 .top-meta .k { color: #8b97a4; margin-right: 4px; }
 .stand {
@@ -173,12 +176,13 @@ button { cursor: pointer; }
 .bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
-  padding: 7px 10px;
+  padding: 8px 10px;
   background: #eef1f5;
   border-bottom: 1px solid var(--line-2);
 }
+.bar .btn-ok, .bar .btn-warn { padding: 5px 14px; font-weight: 650; }
 .btn {
   background: #f7f8fa;
   border: 1px solid #8e97a3;
@@ -262,8 +266,10 @@ table.t td {
 }
 table.t tr:nth-child(even) td { background: var(--row); }
 table.t tr:hover td { background: #fff8dc; }
+table.t tr.go { cursor: pointer; }
 table.t tr.sel td { background: var(--sel); }
 table.t tr.err td { background: var(--bad-bg); }
+table.t tr.demo-row td { box-shadow: inset 3px 0 0 var(--amber); }
 table.t .num { text-align: right; font-variant-numeric: tabular-nums; }
 table.t .mono, .mono {
   font-family: Consolas, "Liberation Mono", "Courier New", monospace;
@@ -281,12 +287,20 @@ table.t .mono, .mono {
 .kpi .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .kpi .s { color: var(--muted); font-size: 11.5px; }
 
+.tbl-wrap { overflow-x: auto; }
+.prog-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 110px;
+}
 .prog {
   height: 11px;
   background: #dfe3e8;
   border: 1px solid #9aa3ad;
   position: relative;
   min-width: 72px;
+  flex: 1;
 }
 .prog > i {
   display: block;
@@ -326,6 +340,7 @@ table.t .mono, .mono {
   padding: 6px 8px;
   border-bottom: 1px solid var(--line-2);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .feed li:first-child { background: #fff8dc; }
 .feed .tm {
@@ -360,8 +375,9 @@ label.f { display: block; color: var(--muted); font-size: 11.5px; margin-bottom:
   background: var(--input);
   padding: 4px 6px;
 }
-.row-f { display: flex; gap: 8px; align-items: flex-end; }
-.row-f .grow { flex: 1; }
+.row-f { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.row-f .grow { flex: 1; min-width: 200px; }
+#sticker-box { flex: none; }
 
 .sticker {
   width: 268px;
@@ -447,6 +463,7 @@ label.f { display: block; color: var(--muted); font-size: 11.5px; margin-bottom:
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 .phone {
   width: 360px;
@@ -467,5 +484,27 @@ label.f { display: block; color: var(--muted); font-size: 11.5px; margin-bottom:
   letter-spacing: 0.04em;
   font-family: Consolas, "Liberation Mono", "Courier New", monospace;
 }
+.cell-k {
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-size: 13.5px;
+}
 
-.recv .tick { color: var(--ok); font-weight: 600; }
+.tick { color: var(--ok); font-weight: 600; }
+.empty { color: var(--muted); padding: 10px 8px; margin: 0; }
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--link);
+  cursor: pointer;
+  font: inherit;
+}
+.linkish:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .side { display: none; }
+  .phone { width: 100%; height: 640px; }
+  .phone-wrap { flex-direction: column; }
+}

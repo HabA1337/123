@@ -16,3 +16,6 @@ python3 -m http.server 8765
 Или просто `index.html` двойным щелчком.
 
 Что говорить на созвоне и в каком порядке — в `../chto-pokazat-konstantinu.md`.
+
+Картинки для Telegram: `screens/`  
+Что писать под ними: `kak-kinut-v-telegram.txt`

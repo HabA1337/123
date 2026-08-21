@@ -45,7 +45,7 @@
 
   function progHTML(pct, extra) {
     var cls = pct >= 100 ? "ok" : pct < 30 ? "warn" : "";
-    return '<div class="prog ' + cls + '" title="' + pct + '%"><i style="width:' + pct + '%"></i></div> <span class="pct">' + pct + "%</span>" + (extra || "");
+    return '<div class="prog-row"><div class="prog ' + cls + '" title="' + pct + '%"><i style="width:' + pct + '%"></i></div><span class="pct">' + pct + "%</span>" + (extra || "") + "</div>";
   }
 
   function workerName(id) {
@@ -68,7 +68,7 @@
       return "<tr>" +
         "<td class='mono'>" + K.esc(sk.art) + "</td>" +
         "<td>" + K.esc(sk.name) + ", р." + K.esc(sk.size) + "</td>" +
-        "<td class='mono cell-big' style='font-size:14px'>" + K.esc(sk.cell) + "</td>" +
+        "<td class='mono cell-k'>" + K.esc(sk.cell) + "</td>" +
         "<td class='num'>" + s.on + "</td>" +
         "<td class='num'>" + s.inb + "</td>" +
         "<td class='num'>" + s.res + "</td>" +
@@ -96,9 +96,9 @@
         '<div class="panel">' +
           '<div class="ph">Номенклатура клиента <span class="sub">' + K.esc(cl.name) + "</span></div>" +
           '<div class="bar"><span class="hint">Клиент видит только свои ячейки. Общей кучи склада нет.</span></div>' +
-          "<table class='t'><thead><tr>" +
+          "<div class='tbl-wrap'><table class='t'><thead><tr>" +
             "<th>Артикул</th><th>Наименование</th><th>Ячейка</th><th>На полке</th><th>В приёмке</th><th>Резерв FBS</th><th>Доступно</th><th>ШК</th>" +
-          "</tr></thead><tbody>" + rows + "</tbody></table>" +
+          "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
         "</div>" +
         '<div class="panel">' +
           '<div class="ph">Приёмка онлайн <span class="sub" id="recv-pct">' + pct + "%</span></div>" +
@@ -106,7 +106,8 @@
             '<div id="recv-bar">' + progHTML(pct) + "</div>" +
             '<p>Документ <b>' + K.esc(r.id) + "</b>, статус <span class='st st-work'>на линии</span></p>" +
             '<p class="hint">Последнее: <span id="recv-last">' + K.esc(r.last.tsd) + " · " + K.esc(r.last.who) +
-              " · +" + r.last.qty + " шт " + K.esc(r.last.ean) + " → " + K.esc(r.last.cell) + "</span></p>" +
+              " · +" + r.last.qty + " шт → <b class='cell-k'>" + K.esc(r.last.cell) + "</b></span>" +
+              " · <span id='recv-ago'>" + K.esc(K.ago(r.lastAt || Date.now() - 32000)) + "</span></p>" +
             '<p class="tick" id="recv-live">обновление с ТСД приёмки идёт само</p>' +
           "</div>" +
         "</div>" +
@@ -117,7 +118,7 @@
   function renderWaves() {
     var rows = K.waves.map(function (w0) {
       var pct = K.pct(w0);
-      return "<tr data-go='#/wave/" + encodeURIComponent(w0.id) + "'>" +
+      return "<tr class='go' data-go='#/wave/" + encodeURIComponent(w0.id) + "' title='открыть заявку'>" +
         "<td><a href='#/wave/" + encodeURIComponent(w0.id) + "'>" + K.esc(w0.id) + "</a></td>" +
         "<td>" + K.esc(w0.cityName) + " <span class='hint'>" + K.esc(w0.city) + "</span></td>" +
         "<td class='mono'>" + K.esc(w0.supply) + "</td>" +
@@ -137,9 +138,9 @@
           "<span>сегодня · WB API · склад «Северная»</span>" +
           '<span class="hint">заказы с кабинета сами сели в заявку на город, не россыпью</span>' +
         "</div>" +
-        "<table class='t'><thead><tr>" +
+        "<div class='tbl-wrap'><table class='t'><thead><tr>" +
           "<th>Заявка</th><th>Город</th><th>Поставка WB</th><th>Создана</th><th>Собрано</th><th>Прогресс</th><th>Статус</th><th>ТСД</th>" +
-        "</tr></thead><tbody>" + rows + "</tbody></table>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
       "</div>"
     );
   }
@@ -156,7 +157,7 @@
         "<td class='mono'>" + K.esc(o.id) + "</td>" +
         "<td>" + K.esc(o.name) + ", р." + K.esc(o.size) + "</td>" +
         "<td class='mono'>" + K.esc(o.art) + "</td>" +
-        "<td class='mono'>" + K.esc(o.cell) + "</td>" +
+        "<td class='mono cell-k'>" + K.esc(o.cell) + "</td>" +
         "<td>" + K.stLabel(o.st) + (o.err ? "<div class='hint'>" + K.esc(o.err) + "</div>" : "") + "</td>" +
         "<td>" + (o.kiz ? "да" : "нет") + "</td>" +
         "<td class='mono'>" + K.esc(o.sticker) + "</td>" +
@@ -164,7 +165,10 @@
         "</tr>";
     }).join("");
     if (!rows) {
-      rows = "<tr><td colspan='8' class='hint'>Список закрыт, заявка уже в доставке (" + K.esc(w0.sentAt || "") + ")</td></tr>";
+      rows = "<tr><td colspan='8'><p class='empty'>Заявка уже в доставке" +
+        (w0.sentAt ? " с " + K.esc(w0.sentAt) : "") +
+        (w0.supplyWb ? " · " + K.esc(w0.supplyWb) : "") +
+        ". Состав на экране не держим — заявка уехала.</p></td></tr>";
     }
 
     var btn = sent
@@ -185,9 +189,9 @@
       "</div>" +
       '<div class="panel">' +
         '<div class="bar">' + btn + "</div>" +
-        "<table class='t'><thead><tr>" +
+        "<div class='tbl-wrap'><table class='t'><thead><tr>" +
           "<th>Заказ WB</th><th>Товар</th><th>Артикул</th><th>Ячейка</th><th>Сборка</th><th>КИЗ</th><th>Стикер</th><th>Кто</th>" +
-        "</tr></thead><tbody>" + rows + "</tbody></table>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
         (w0.shown.length && w0.shown.length < w0.total
           ? '<div class="pb hint">на экране ' + w0.shown.length + " из " + w0.total + " — остальные в том же виде, не листаем на созвоне</div>"
           : "") +
@@ -257,9 +261,9 @@
               '<button class="btn" id="kiz-go">найти</button>' +
             "</div>" +
             '<div class="chips" style="margin-top:8px">' +
-              '<button type="button" class="chip js-fill" data-v="' + K.demoCodes.ean + '">ШК ' + K.demoCodes.ean + "</button> " +
-              '<button type="button" class="chip js-fill" data-v="' + K.demoCodes.kiz + '">КИЗ</button> ' +
-              '<button type="button" class="chip js-fill" data-v="3541287654301">заказ 3541287654301</button>' +
+              '<button type="button" class="chip js-fill" data-v="' + K.demoCodes.ean + '">подставить ШК ' + K.demoCodes.ean + "</button> " +
+              '<button type="button" class="chip js-fill" data-v="' + K.demoCodes.kiz + '">подставить КИЗ</button> ' +
+              '<button type="button" class="chip js-fill" data-v="3541287654301">подставить заказ 3541287654301</button>' +
             "</div>" +
             '<p class="hint">Цепочка как на складе: сначала товар, потом марка, потом какой стикер клеить.</p>' +
             '<div id="kiz-out"></div>' +
@@ -279,18 +283,22 @@
       { t: Date.now() - 40000, who: "ТСД-03", sticker: "364 512 847", prn: "Zebra-МСК-1" },
       { t: Date.now() - 22000, who: "ТСД-05", sticker: "364 512 848", prn: "Zebra-МСК-1" }
     ];
-    if (!log.length) return "<p class='hint'>пока пусто</p>";
-    return "<table class='t'><thead><tr><th>Время</th><th>Стикер</th><th>Кто</th><th>Принтер</th></tr></thead><tbody>" +
+    if (!log.length) return "<p class='empty'>Пока никто не печатал. На созвоне жми «на принтер» слева.</p>";
+    return "<div class='tbl-wrap'><table class='t'><thead><tr><th>Время</th><th>Стикер</th><th>Кто</th><th>Принтер</th></tr></thead><tbody>" +
       log.map(function (x) {
         return "<tr><td>" + K.fmtTime(x.t) + "</td><td class='mono'>" + K.esc(x.sticker) + "</td><td>" +
           K.esc(x.who) + "</td><td>" + K.esc(x.prn) + "</td></tr>";
-      }).join("") + "</tbody></table>";
+      }).join("") + "</tbody></table></div>";
   }
 
   function fillKizOut(code) {
     var box = $("kiz-out");
     if (!box) return;
     var found = K.findByCode(code);
+    if (!String(code || "").trim()) {
+      box.innerHTML = '<p class="empty">Введите ШК, КИЗ или номер заказа — или жмите «подставить».</p>';
+      return;
+    }
     if (!found) {
       box.innerHTML = '<p class="st st-bad">код не из этой поставки / не из номенклатуры стенда</p>';
       return;
@@ -334,8 +342,9 @@
     var rows = K.stock.map(function (s) {
       var sk = K.sku(s.ean);
       var cl = K.clientById(sk.client);
-      return "<tr data-ean='" + sk.ean + "'>" +
-        "<td class='mono'>" + K.esc(sk.cell) + "</td>" +
+      var demo = s.ean === K.demoCodes.ean;
+      return "<tr data-ean='" + sk.ean + "'" + (demo ? " class='sel demo-row'" : "") + ">" +
+        "<td class='mono cell-k'>" + K.esc(sk.cell) + (demo ? " <span class='hint'>← продажа</span>" : "") + "</td>" +
         "<td>" + K.esc(sk.name) + "</td>" +
         "<td class='mono'>" + K.esc(sk.art) + "</td>" +
         "<td>" + K.esc(cl.name) + "</td>" +
@@ -358,14 +367,14 @@
           '<button class="btn btn-warn" id="btn-sale">пришла продажа с WB</button>' +
           '<span class="hint">на созвоне жми это — с ячейки A-12-04 уйдёт 1 шт футболки, резерв тоже</span>' +
         "</div>" +
-        "<table class='t' id='stock-t'><thead><tr>" +
+        "<div class='tbl-wrap'><table class='t' id='stock-t'><thead><tr>" +
           "<th>Ячейка</th><th>Товар</th><th>Артикул</th><th>Клиент</th><th>На полке</th><th>Резерв</th><th>Доступно</th>" +
-        "</tr></thead><tbody>" + rows + "</tbody></table>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
       "</div>" +
       '<div class="panel">' +
         '<div class="ph">Журнал списаний</div>' +
-        "<table class='t' id='sale-t'><thead><tr><th>Время</th><th>Заказ WB</th><th>Товар</th><th>Ячейка</th><th>Кол-во</th><th>Источник</th></tr></thead><tbody>" +
-        jour + "</tbody></table>" +
+        "<div class='tbl-wrap'><table class='t' id='sale-t'><thead><tr><th>Время</th><th>Заказ WB</th><th>Товар</th><th>Ячейка</th><th>Кол-во</th><th>Источник</th></tr></thead><tbody>" +
+        jour + "</tbody></table></div>" +
       "</div>"
     );
   }
@@ -500,7 +509,19 @@
       var ev = K.livePool[liveIdx++];
       K.pushEvent({ at: Date.now(), who: ev.who, kind: ev.kind, text: ev.text });
       if (ev.kind === "in" && K.receiving.accepted < K.receiving.total) {
-        K.receiving.accepted = Math.min(K.receiving.total, K.receiving.accepted + 2);
+        var add = ev.qty > 0 ? ev.qty : 2;
+        K.receiving.accepted = Math.min(K.receiving.total, K.receiving.accepted + add);
+        if (ev.cell) {
+          var u = K.workerById(ev.who);
+          K.receiving.last = {
+            ean: ev.ean || K.receiving.last.ean,
+            qty: add,
+            cell: ev.cell,
+            who: u.name,
+            tsd: u.tsd
+          };
+          K.receiving.lastAt = Date.now();
+        }
         K.store.set({ recv: K.receiving.accepted });
       }
       var r = route();
@@ -512,34 +533,53 @@
         var n = $("recv-n");
         var bar = $("recv-bar");
         var pctEl = $("recv-pct");
+        var lastEl = $("recv-last");
         if (n) n.textContent = K.receiving.accepted;
         if (bar) {
           var pct = Math.round((K.receiving.accepted / K.receiving.total) * 100);
           bar.innerHTML = progHTML(pct);
           if (pctEl) pctEl.textContent = pct + "%";
         }
+        if (lastEl && K.receiving.last) {
+          lastEl.innerHTML = K.esc(K.receiving.last.tsd) + " · " + K.esc(K.receiving.last.who) +
+            " · +" + K.receiving.last.qty + " шт → <b class='cell-k'>" + K.esc(K.receiving.last.cell) + "</b>";
+        }
       }
     }
+    var ago = $("recv-ago");
+    if (ago && K.receiving.lastAt) ago.textContent = K.ago(K.receiving.lastAt);
+  }
+
+  function el(e, sel) {
+    return e.target && e.target.closest ? e.target.closest(sel) : null;
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target;
-    if (t.closest && t.closest("tr[data-go]") && t.tagName !== "A") {
-      location.hash = t.closest("tr[data-go]").getAttribute("data-go");
+    var row = el(e, "tr[data-go]");
+    if (row && !el(e, "a")) {
+      location.hash = row.getAttribute("data-go");
     }
-    if (t.id === "btn-deliver") openDeliver();
-    if (t.id === "md-no" || t.id === "modal-bg") {
+    if (el(e, "#btn-deliver")) openDeliver();
+    if (el(e, "#md-no") || e.target.id === "modal-bg") {
       $("modal").hidden = true;
       $("modal").innerHTML = "";
     }
-    if (t.id === "md-yes") doDeliver();
-    if (t.id === "kiz-go") fillKizOut($("kiz-in").value);
-    if (t.classList.contains("js-fill")) {
-      $("kiz-in").value = t.getAttribute("data-v");
+    if (el(e, "#md-yes")) doDeliver();
+    if (el(e, "#kiz-go")) fillKizOut($("kiz-in").value);
+    var fill = el(e, ".js-fill");
+    if (fill) {
+      $("kiz-in").value = fill.getAttribute("data-v");
       fillKizOut($("kiz-in").value);
     }
-    if (t.id === "btn-print") doPrint(t.getAttribute("data-sticker"));
-    if (t.id === "btn-sale") doSale();
+    var prn = el(e, "#btn-print");
+    if (prn) doPrint(prn.getAttribute("data-sticker"));
+    if (el(e, "#btn-sale")) doSale();
+    if (el(e, "#reset-demo")) {
+      e.preventDefault();
+      K.resetDemo();
+      location.hash = "#/client";
+      location.reload();
+    }
   });
 
   document.addEventListener("keydown", function (e) {
@@ -550,14 +590,29 @@
   });
 
   w.addEventListener("hashchange", page);
-  w.addEventListener("storage", function () {
+  function refreshFromStore() {
     K.applySavedWaves();
     var r = route();
     if (r.name === "feed") {
       var ul = $("feed-ul");
       if (ul) ul.innerHTML = renderFeedList();
     }
-  });
+    if (r.name === "kiz") {
+      var pl = $("print-log");
+      if (pl) pl.innerHTML = renderPrintLog();
+    }
+    if (r.name === "wave") page();
+    var s = K.store.get();
+    if (s.printLog && s.printLog[0] && Date.now() - s.printLog[0].t < 2500) {
+      var q = $("prn-q");
+      if (q) {
+        q.textContent = "1";
+        setTimeout(function () { if (q) q.textContent = "0"; }, 1600);
+      }
+    }
+  }
+
+  w.addEventListener("storage", refreshFromStore);
   w.addEventListener("kontur-store", function () {
     var r = route();
     if (r.name === "feed") {
