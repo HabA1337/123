@@ -53,6 +53,13 @@
     return u.name;
   }
 
+  function printerName(id) {
+    for (var i = 0; i < K.printers.length; i++) {
+      if (K.printers[i].id === id) return K.printers[i].name;
+    }
+    return id;
+  }
+
   function renderClient() {
     var r = K.receiving;
     var cl = K.clientById(r.client);
@@ -174,7 +181,7 @@
         '<div class="panel"><div class="l">прогресс</div><div class="v">' + pct + '%</div><div class="s">' + w0.picked + " из " + w0.total + " заказов</div></div>" +
         '<div class="panel"><div class="l">поставка</div><div class="v" style="font-size:16px">' + K.esc(w0.supply) + '</div><div class="s">город ' + K.esc(w0.city) + "</div></div>" +
         '<div class="panel"><div class="l">ошибки КИЗ</div><div class="v">' + w0.err + '</div><div class="s">пока есть ошибка — в доставку нельзя</div></div>' +
-        '<div class="panel"><div class="l">ТСД на заявке</div><div class="v" style="font-size:16px">' + (w0.tsd.join(", ") || "—") + '</div><div class="s">принтер ' + K.esc(w0.printer) + "</div></div>" +
+        '<div class="panel"><div class="l">ТСД на заявке</div><div class="v" style="font-size:16px">' + (w0.tsd.join(", ") || "—") + '</div><div class="s">принтер ' + K.esc(printerName(w0.printer)) + "</div></div>" +
       "</div>" +
       '<div class="panel">' +
         '<div class="bar">' + btn + "</div>" +
