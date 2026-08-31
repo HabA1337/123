@@ -13,7 +13,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.page import PageMargins
 
-OUT = Path(__file__).resolve().parent / "Журнал_учета_служебного_времени.xlsx"
+OUT = Path(__file__).resolve().parent / "zhurnal.xlsx"
 
 THIN = Border(
     left=Side(style="thin", color="000000"),

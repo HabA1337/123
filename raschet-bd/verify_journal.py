@@ -8,7 +8,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parent
-XLSX = ROOT / "Журнал_учета_служебного_времени.xlsx"
+XLSX = ROOT / "zhurnal.xlsx"
 
 
 def rest_days(bd_days: int) -> int:
